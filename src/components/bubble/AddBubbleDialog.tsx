@@ -23,11 +23,13 @@ export function AddBubbleDialog({
   onDelete,
   liveEdit = false
 }: AddBubbleDialogProps) {
+  const presetColors = BUBBLE_COLOR_OPTIONS.slice(0, -1);
   const [name, setName] = useState(initialValue?.name ?? "");
   const [color, setColor] = useState(initialValue?.color ?? BUBBLE_COLOR_OPTIONS[0]);
   const [icon, setIcon] = useState(initialValue?.icon ?? BUBBLE_ICON_OPTIONS[0]);
   const [saving, setSaving] = useState(false);
   const canSave = useMemo(() => name.trim().length > 0 && !saving, [name, saving]);
+  const isCustomColor = !presetColors.some((option) => option.toLowerCase() === color.toLowerCase());
 
   useEffect(() => {
     if (!liveEdit || !initialValue || name.trim().length === 0) return;
@@ -91,15 +93,23 @@ export function AddBubbleDialog({
 
         <div className="field-label">选择颜色</div>
         <div className="color-grid">
-          {BUBBLE_COLOR_OPTIONS.map((option) => (
+          {presetColors.map((option) => (
             <button
               key={option}
-              className={`color-dot ${option === color ? "selected" : ""}`}
+              className={`color-dot ${option.toLowerCase() === color.toLowerCase() ? "selected" : ""}`}
               style={{ background: option }}
               onClick={() => setColor(option)}
               aria-label={`选择颜色 ${option}`}
             />
           ))}
+          <label
+            className={`color-dot color-picker-dot ${isCustomColor ? "selected" : ""}`}
+            style={{ "--picker-color": color } as React.CSSProperties}
+            aria-label="自定义颜色"
+          >
+            <input type="color" value={color} onChange={(event) => setColor(event.target.value)} />
+            <span />
+          </label>
         </div>
 
         <div className="field-label">选择图标</div>

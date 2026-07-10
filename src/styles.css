@@ -299,7 +299,10 @@ button {
   position: relative;
   z-index: 5;
   text-align: center;
-  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.35);
+  font-family: "Arial Rounded MT Bold", "Nunito", "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+  text-shadow:
+    0 2px 14px rgba(0, 0, 0, 0.32),
+    0 0 18px rgba(255, 255, 255, 0.16);
 }
 
 .water-fill {
@@ -343,14 +346,10 @@ button {
   opacity: 0.94;
 }
 
-.time-wave-group:nth-child(2n) .time-wave {
+.time-wave-group-top .time-wave {
   border-radius: 41%;
-  animation-duration: 8s;
-}
-
-.time-wave-group:nth-child(3n) .time-wave {
-  border-radius: 46%;
-  animation-duration: 6.6s;
+  animation-duration: 8.2s;
+  animation-delay: -1.4s;
 }
 
 @keyframes rotateWave {
@@ -371,15 +370,18 @@ button {
 .main-bubble-name {
   font-size: clamp(26px, 8vw, 42px);
   font-weight: 800;
-  line-height: 1;
+  line-height: 1.08;
+  letter-spacing: 0;
 }
 
 .main-bubble-time {
-  margin-top: 14px;
-  font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
-  font-size: clamp(23px, 6vw, 35px);
-  font-weight: 700;
-  letter-spacing: 0;
+  margin-top: 12px;
+  font-family: inherit;
+  font-size: clamp(25px, 6vw, 38px);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  word-spacing: 0.08em;
 }
 
 .orbit-bubble {
@@ -651,6 +653,36 @@ button {
   width: 36px;
   height: 36px;
   border-radius: 9999px;
+}
+
+.color-picker-dot {
+  --picker-color: #5b8def;
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle, var(--picker-color) 0 46%, transparent 47%),
+    conic-gradient(#ef4444, #f59e0b, #4caf50, #38bdf8, #5b8def, #a855f7, #ef4444);
+}
+
+.color-picker-dot input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.color-picker-dot span {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.82);
+  border-radius: 9999px;
+  background: var(--picker-color);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--picker-color) 55%, transparent);
+  pointer-events: none;
 }
 
 .icon-choice {
@@ -1815,7 +1847,7 @@ button {
 }
 
 .main-bubble-time {
-  font-size: 31px;
+  font-size: 36px;
 }
 
 .stack-bubble {
@@ -1948,7 +1980,7 @@ button {
   }
 
   .main-bubble-time {
-    font-size: 27px;
+    font-size: 31px;
   }
 
   .stack-bubble {

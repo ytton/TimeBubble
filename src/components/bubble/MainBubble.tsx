@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import type { BubbleType, DailyBubble, TimeSegment } from "../../types/domain";
-import { formatDuration } from "../../utils/time";
+import { formatBubbleDuration } from "../../utils/time";
 import { SegmentWater } from "./SegmentWater";
 
 interface MainBubbleProps {
@@ -46,7 +46,7 @@ export function MainBubble({
       <SegmentWater bubbleTypes={bubbleTypes} segments={segments} dailyBubble={dailyBubble} now={now} />
       <div className="main-bubble-content">
         <div className="main-bubble-name">{currentType?.name ?? "无所事事"}</div>
-        <div className="main-bubble-time">{formatDuration(elapsed)}</div>
+        <div className="main-bubble-time">{formatBubbleDuration(elapsed)}</div>
       </div>
     </motion.div>
   );

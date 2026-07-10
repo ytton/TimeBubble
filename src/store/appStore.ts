@@ -64,19 +64,6 @@ async function ensureDefaults() {
     await db.bubbleTypes.bulkPut(
       DEFAULT_BUBBLE_TYPES.map((type) => ({ ...type, createdAt: now, updatedAt: now }))
     );
-  } else {
-    for (const type of DEFAULT_BUBBLE_TYPES) {
-      const existing = await db.bubbleTypes.get(type.id);
-      if (existing) {
-        await db.bubbleTypes.put({
-          ...existing,
-          name: type.name,
-          icon: type.icon,
-          hidden: type.hidden,
-          updatedAt: now
-        });
-      }
-    }
   }
 }
 
@@ -252,18 +239,53 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   updateSettings: async (patch) => {
+    const now = Date.now();
     const current = get().settings;
-    const next = { ...current, ...patch, id: "settings", updatedAt: Date.now() };
+    const next = { ...current, ...patch, id: "settings", updatedAt: now };
     await db.settings.put(next);
 
     const daily = get().currentDailyBubble;
     if (daily && patch.bubbleEndTime) {
+      const updatedEndTime = getEndTimeForDay(daily.dayId, patch.bubbleEndTime);
+      const shouldResumeToday = daily.dayId === getDayId(now) && updatedEndTime > now;
       const updatedDaily = {
         ...daily,
-        endTime: getEndTimeForDay(daily.dayId, patch.bubbleEndTime),
-        updatedAt: Date.now()
+        endTime: updatedEndTime,
+        exploded: shouldResumeToday ? false : daily.exploded,
+        updatedAt: now
       };
       await db.dailyBubbles.put(updatedDaily);
+
+      if (shouldResumeToday) {
+        const openSegment = await db.segments
+          .where("dayId")
+          .equals(daily.dayId)
+          .filter((segment) => segment.endTime === undefined)
+          .first();
+
+        if (!openSegment) {
+          const lastSegment = (await db.segments.where("dayId").equals(daily.dayId).toArray()).sort(
+            (a, b) => b.startTime - a.startTime
+          )[0];
+
+          if (lastSegment) {
+            await db.segments.put({
+              ...lastSegment,
+              endTime: undefined,
+              updatedAt: now
+            });
+          } else {
+            await db.segments.put({
+              id: createId("segment"),
+              bubbleTypeId: IDLE_BUBBLE_ID,
+              startTime: now,
+              dayId: daily.dayId,
+              createdAt: now,
+              updatedAt: now
+            });
+          }
+        }
+      }
     }
 
     await get().refresh();

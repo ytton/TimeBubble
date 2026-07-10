@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { BubbleIcon } from "../common/BubbleIcon";
 import type { BubbleType } from "../../types/domain";
 
@@ -39,10 +40,34 @@ export function OrbitBubble({
 }: OrbitBubbleProps) {
   const x = position?.x ?? 0;
   const y = position?.y ?? 0;
+  const clickTimerRef = useRef<number | undefined>(undefined);
 
-  function handleClick() {
-    if (wasDragged()) return;
-    onClick();
+  useEffect(() => {
+    return () => clearPendingClick();
+  }, []);
+
+  function clearPendingClick() {
+    if (clickTimerRef.current === undefined) return;
+    window.clearTimeout(clickTimerRef.current);
+    clickTimerRef.current = undefined;
+  }
+
+  function handleClick(event: React.MouseEvent) {
+    if (wasDragged()) {
+      clearPendingClick();
+      return;
+    }
+
+    if (event.detail > 1) {
+      clearPendingClick();
+      return;
+    }
+
+    clearPendingClick();
+    clickTimerRef.current = window.setTimeout(() => {
+      onClick();
+      clickTimerRef.current = undefined;
+    }, 260);
   }
 
   return (
@@ -63,6 +88,7 @@ export function OrbitBubble({
       onDoubleClick={(event) => {
         event.preventDefault();
         event.stopPropagation();
+        clearPendingClick();
         onEdit();
       }}
       onContextMenu={(event) => {

@@ -88,7 +88,7 @@ export const BUBBLE_COLOR_OPTIONS = [
   "#38BDF8",
   "#EC4899",
   "#14B8A6",
-  "#EAB308",
+  "#A3E635",
   "#94A3B8"
 ];
 

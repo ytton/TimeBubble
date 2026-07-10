@@ -40,6 +40,19 @@ export function formatDuration(ms: number, compact = false) {
   return [hours, minutes, seconds].map((value) => value.toString().padStart(2, "0")).join(":");
 }
 
+export function formatBubbleDuration(ms: number) {
+  const safeMs = Math.max(0, Math.floor(ms));
+  const totalSeconds = Math.floor(safeMs / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const secondText = `${seconds.toString().padStart(2, "0")}s`;
+
+  if (hours > 0) return `${hours}h ${minutes}m ${secondText}`;
+  if (minutes > 0) return `${minutes}m ${secondText}`;
+  return secondText;
+}
+
 export function formatClock(time: number) {
   return dayjs(time).format("HH:mm");
 }

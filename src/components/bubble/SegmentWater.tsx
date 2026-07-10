@@ -34,10 +34,10 @@ export function SegmentWater({ bubbleTypes, segments, dailyBubble, now, classNam
 
   return (
     <div className={`segment-water-stack ${className ?? ""}`}>
-      {layers.map((layer) => (
+      {layers.map((layer, index) => (
         <div
           key={layer.id}
-          className="time-wave-group"
+          className={`time-wave-group ${index === layers.length - 1 ? "time-wave-group-top" : ""}`}
           style={
             {
               "--layer-color": layer.color,
