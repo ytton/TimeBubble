@@ -12,6 +12,7 @@ type StatsTab = "day" | "week" | "month";
 export function StatsPage() {
   const now = useNow(30000);
   const [tab, setTab] = useState<StatsTab>("day");
+  const [selectedTotalId, setSelectedTotalId] = useState<string | undefined>();
   const { segments, bubbleTypes } = useAppStore();
   const todayId = getDayId(now);
   const todayStats = buildDailyStats(todayId, segments, bubbleTypes, now);
@@ -39,8 +40,14 @@ export function StatsPage() {
   const activeStats = tab === "day" ? [todayStats] : tab === "week" ? weekStats : monthStats;
   const mergedTotals = mergeTotals(activeStats);
   const totalDuration = mergedTotals.reduce((sum, item) => sum + item.duration, 0);
-  const conic = buildConic(mergedTotals);
+  const conic = buildConic(mergedTotals, selectedTotalId);
   const dominant = mergedTotals[0];
+  const selectedTotal = mergedTotals.find((item) => item.id === selectedTotalId) ?? dominant;
+
+  function handleDonutPointer(event: React.PointerEvent<HTMLDivElement>) {
+    const item = getDonutItemFromPointer(event, mergedTotals);
+    if (item) setSelectedTotalId(item.id);
+  }
 
   return (
     <PageShell title="统计" subtitle="回看时间最终流向了哪里">
@@ -74,21 +81,39 @@ export function StatsPage() {
       <section className="stats-grid">
         <div className="glass-panel stats-card">
           <h3>时间占比</h3>
-          <div className="stats-donut" style={{ background: conic }}>
+          <div
+            className="stats-donut"
+            style={{ background: conic, "--active-color": selectedTotal?.color ?? "#475569" } as React.CSSProperties}
+            onPointerMove={handleDonutPointer}
+            onClick={handleDonutPointer}
+            role="img"
+            aria-label="时间占比饼图"
+          >
             <div>
-              <span>总计</span>
-              <strong>{formatDuration(totalDuration, true)}</strong>
+              <span>{selectedTotal?.name ?? "总计"}</span>
+              <strong>{selectedTotal ? `${selectedTotal.percent.toFixed(1)}%` : "0%"}</strong>
+              <em>{selectedTotal ? formatDuration(selectedTotal.duration, true) : formatDuration(totalDuration, true)}</em>
             </div>
           </div>
           <div className="stats-legend-list">
             {mergedTotals.map((item) => (
-              <div key={item.id}>
-                <span>
+              <button
+                key={item.id}
+                className={selectedTotal?.id === item.id ? "active" : ""}
+                onClick={() => setSelectedTotalId(item.id)}
+                onPointerEnter={() => setSelectedTotalId(item.id)}
+                onFocus={() => setSelectedTotalId(item.id)}
+                type="button"
+              >
+                <span className="stats-legend-name">
                   <i style={{ background: item.color }} />
                   {item.name}
                 </span>
-                <strong>{item.percent.toFixed(1)}%</strong>
-              </div>
+                <span className="stats-legend-value">
+                  <strong>{item.percent.toFixed(1)}%</strong>
+                  <em>{formatDuration(item.duration, true)}</em>
+                </span>
+              </button>
             ))}
           </div>
         </div>
@@ -225,7 +250,7 @@ function mergeTotals(statsList: ReturnType<typeof buildDailyStats>[]) {
   return list.map((item) => ({ ...item, percent: total > 0 ? (item.duration / total) * 100 : 0 }));
 }
 
-function buildConic(items: ReturnType<typeof mergeTotals>) {
+function buildConic(items: ReturnType<typeof mergeTotals>, activeId?: string) {
   if (items.length === 0) return "conic-gradient(#475569 0% 100%)";
 
   let cursor = 0;
@@ -233,8 +258,35 @@ function buildConic(items: ReturnType<typeof mergeTotals>) {
     const start = cursor;
     const end = cursor + item.percent;
     cursor = end;
-    return `${item.color} ${start}% ${end}%`;
+    const color =
+      activeId && item.id !== activeId
+        ? `color-mix(in srgb, ${item.color} 34%, rgba(15, 23, 42, 0.78))`
+        : item.color;
+    return `${color} ${start}% ${end}%`;
   });
 
   return `conic-gradient(${stops.join(", ")})`;
+}
+
+function getDonutItemFromPointer(event: React.PointerEvent<HTMLDivElement>, items: ReturnType<typeof mergeTotals>) {
+  if (items.length === 0) return undefined;
+
+  const rect = event.currentTarget.getBoundingClientRect();
+  const x = event.clientX - rect.left - rect.width / 2;
+  const y = event.clientY - rect.top - rect.height / 2;
+  const distance = Math.hypot(x, y);
+  const outerRadius = rect.width / 2;
+  const innerRadius = outerRadius * 0.61;
+
+  if (distance < innerRadius || distance > outerRadius) return undefined;
+
+  const angle = (Math.atan2(y, x) * 180) / Math.PI;
+  const percent = ((angle + 450) % 360) / 3.6;
+  let cursor = 0;
+
+  return items.find((item) => {
+    const start = cursor;
+    cursor += item.percent;
+    return percent >= start && percent <= cursor;
+  });
 }
